@@ -1,0 +1,6 @@
+langchain
+langchain-chroma
+langchain-google-genai
+langchain-community
+python-dotenv==1.0.1
+google-generativeai==0.7.2
