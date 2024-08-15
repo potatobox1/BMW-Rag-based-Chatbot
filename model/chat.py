@@ -20,7 +20,7 @@ vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings
 
 retriever = vectorstore.as_retriever(
     search_type="similarity",
-    search_kwargs={"k": 20},
+    search_kwargs={"k": 3},
 )
 
 # compressor = RankLLMRerank(top_n=5, model="zephyr")

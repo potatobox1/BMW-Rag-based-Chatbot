@@ -60,7 +60,7 @@ if __name__ == "__main__":
             with open(filename, 'w', encoding='utf-8') as file:
                 file.write(doc.page_content)
         for doc in pdf_docs:
-            filename = "content/data/" + doc.metadata['source'] + ".txt"
+            filename = "content/data/" + "MINI Cars Brochure" + ".txt"
             with open(filename, 'w', encoding='utf-8') as file:
                 file.write(doc.page_content)
 
