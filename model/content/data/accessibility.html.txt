@@ -1,0 +1,187 @@
+MINI Lease and Finance Offers
+
+Explore Offers
+
+Select Your Local MINI Dealership
+
+Select Your Local Dealer
+
+Show More Locations
+
+MENU
+
+Certified Pre-Owned
+
+Login
+
+MINI ACCESSIBILITY STATEMENT
+
+Updated as of July 1, 2021
+
+MINI USA, a division of BMW of North America, LLC is committed to providing a website that is accessible for people with disabilities. To meet this commitment, we are continually improving the user experience to ensure we provide equal access to all of our users.
+
+Measures to support accessibility
+
+MINIUSA.com takes the following measures to assess and ensure accessibility of our website:
+
+Provide continual accessibility training for our staff; · Assign clear accessibility targets and responsibilities; and · Employ formal accessibility quality assurance methods.
+
+Whenever possible, MINIUSA.com will adhere to the Web Content Accessibility Guidelines (WCAG) 2.1 levels A and AA, which defines requirements for designers and developers to improve accessibility for people with disabilities.
+
+Compatibility with browsers and assistive technology
+
+MINIUSA.com uses the following browsers and assistive technology for conformance with accessibility standards:
+
+MacOS using the latest Safari browser version and VoiceOver as the assistive technology · Windows using the latest Firefox browser version and NVDA as the assistive technology
+
+Technical specifications
+
+Conformance with accessibility standards for MINIUSA.com relies on the following technologies:
+
+HTML · WAI-ARIA · CSS
+
+Implementation tools
+
+The following tools have been utilized by MINIUSA.com to implement and ensure the accessibility of our website.
+
+Standards for browsers
+
+Color contrast checker
+
+Keyboard navigation
+
+Screen reader compatibility
+
+Limitations and alternatives
+
+Despite our best efforts to ensure accessibility of MINIUSA.com, there may be some limitations. Below is a description of known limitations.
+
+Alternative text for decorative elements: Though we do provide textual alternative for most of our non-text content, we omit in instances where it results in duplicative content.
+
+Captions and/or transcripts for media: For videos and live audio that do not have spoken text, we do not provide captions and a transcript.
+
+Font styling: Headings and text legibility may be compromised to adhere to corporate branding. This includes headings formatted in all caps and text placed over media.
+
+Font size: To increase legibility, enlarge content by using your native browser functionality.
+
+Carousels: MINIUSA.com's usage of carousels incorporate elements like alternative text and manual scrolling for improved accessibility, but some users might experience technical limitations.
+
+Please note that MINI USA is not responsible for the accessibility of the content on any third-party website, owned and operated by an independent party over which MINI USA has no control. This includes, but is not limited to, dealer websites affiliated with MINI USA.
+
+Feedback
+
+We welcome your feedback relating to improving the accessibility of our website. Please don't hesitate to contact us at:
+
+Phone: 866-275-6464 Customer Service Hours: Monday-Thursday 9:00 am to 9:00 pm ET, Friday 9:00 am to 6:00 pm ET. Email: mini.assistance@askminiusa.com Mail: MINI USA, Customer Relations and Services, PO Box 1227, Westwood NJ 07675-1227
+
+OK Cancel
+
+Stay updated.
+
+Join our mailing list for all the latest MINI news, offers, and buzz. And don’t worry—we won’t share your information with anyone else.
+
+Subscribe
+
+2025 MODELS
+
+2025 New MINI Family
+
+MINI Countryman S ALL4
+
+MINI JCW Countryman ALL4
+
+MINI Cooper 2 Door
+
+MINI Cooper 4 Door
+
+2024 MODELS
+
+MINI Electric Hardtop 2 Door
+
+MINI Convertible
+
+MINI Electric
+
+MINI John Cooper Works
+
+Outgoing 2024 Models
+
+MINI Countryman
+
+MINI Hardtop 2 Door
+
+MINI Hardtop 4 Door
+
+MINI Clubman
+
+Community
+
+Why MINI
+
+Covered Maintenance
+
+Our Heritage
+
+Motorsports
+
+Shopping Tools
+
+Build A New MINI
+
+Find A Dealer
+
+Schedule A Test Drive
+
+Special Offers
+
+Estimate A Payment
+
+MINI Financial Services
+
+Certified Pre-Owned
+
+Military Program
+
+MINI Mobility Program
+
+Motoring Protection Programs
+
+U.S. Diplomatic Sales Program
+
+MINI App
+
+LEGAL
+
+Contact Us
+
+Safety And Emission Recalls
+
+MINI Accessibility Statement
+
+Frequently Asked Questions
+
+Privacy & Legal
+
+Do Not Sell My Personal Information
+
+MINI.com
+
+Ad Choices
+
+Manage Cookies
+
+CAREERS
+
+MINI Careers
+
+© 2024 MINI USA, a division of BMW of North America, LLC. The MINI name, MINI logo, model names, and other trademarks are trademarks of BMW AG.
+
+Tik Tok
+
+Facebook
+
+Instagram
+
+Twitter
+
+Youtube
