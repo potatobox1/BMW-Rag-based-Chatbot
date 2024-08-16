@@ -9,6 +9,8 @@ from langchain.retrievers.document_compressors import LLMChainExtractor
 import argparse
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_groq import ChatGroq
+import gradio as gr
+
 
 
 CHROMA_DIR = "Chroma"
@@ -16,12 +18,11 @@ CHROMA_DIR = "Chroma"
 load_dotenv()
 api_key = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash')
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001",google_api_key=api_key)
 
 llm_model = ChatGroq(
     api_key=os.environ.get("GROQ_API_KEY"),
-    model="mixtral-8x7b-32768",
+    model="llama-3.1-70b-versatile",
     temperature=0,
     max_tokens=None,
     timeout=None,
@@ -30,20 +31,18 @@ llm_model = ChatGroq(
 
 vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
 
-retriever = MultiQueryRetriever.from_llm(
-    retriever = vectorstore.as_retriever(
+retriever = vectorstore.as_retriever(
     search_type="similarity",
     search_kwargs={"k": 3},
-    ),
-    llm=llm_model
-)
-compressor = LLMChainExtractor.from_llm(llm_model)
+    )
+
+# compressor = LLMChainExtractor.from_llm(llm_model)
 
 # Combine MultiQueryRetriever with ContextualCompressionRetriever
-compression_retriever = ContextualCompressionRetriever(
-    base_compressor=compressor,
-    base_retriever=retriever
-)
+# compression_retriever = ContextualCompressionRetriever(
+#     base_compressor=compressor,
+#     base_retriever=retriever
+# )
 
 # compressor = RankLLMRerank(top_n=5, model="zephyr")
 # compression_retriever = ContextualCompressionRetriever(
@@ -72,7 +71,7 @@ SYSTEM_PROMPT = (
     
     "6. **Response Quality**: Provide long, detailed and comprehensive answers to ensure users receive the information they need."
     
-    "7. **Syntax and Formatting: Answer in plain text, dont use symbols like **, there is no need to mention the existence of retrieved information explicitly"
+    "7. **Syntax and Formatting: Answer in plain text, dont use symbols like **, do not mention the existence of retrieved information explicitly"
 
     "\n\n"
     "{context}"
@@ -88,9 +87,9 @@ PROMPT = ChatPromptTemplate.from_messages(
 
 from pprint import pprint
 
-def get_answer(query):
+def get_answer(query, history):
     # Use the retriever to get relevant documents
-    docs = compression_retriever.invoke(query)
+    docs = retriever.invoke(query)
 
     # Format the context from retrieved documents
     context = "\n\n".join([(doc.metadata['source'] + doc.page_content) for doc in docs])
@@ -99,16 +98,15 @@ def get_answer(query):
     final_prompt = PROMPT.format(input=query, context=context)
     print(final_prompt)
     # Pass the final prompt to the LLM model
-    response = model.generate_content(final_prompt)
-    return response
+    response = llm_model.invoke(final_prompt)
+    return response.content
+
+def gradio_interface(query):
+    return get_answer(query)
+
+with gr.Blocks() as demo:
+    gr.ChatInterface(get_answer)
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Query the vector store with a given text.")
-    parser.add_argument('query', type=str, help="The text to query the vector store with.")
-
-    args = parser.parse_args()
-    
-    answer = get_answer(args.query)
-    
-    # Print the answer
-    print(answer.text)
+    demo.launch()
