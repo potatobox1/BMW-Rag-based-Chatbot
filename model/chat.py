@@ -4,23 +4,45 @@ import google.generativeai as genai
 import os
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-#from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
-#from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
+from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import LLMChainExtractor
 import argparse
+from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain_groq import ChatGroq
+
 
 CHROMA_DIR = "Chroma"
 
 load_dotenv()
 api_key = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=api_key)
-llm_model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash')
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001",google_api_key=api_key)
+
+llm_model = ChatGroq(
+    api_key=os.environ.get("GROQ_API_KEY"),
+    model="mixtral-8x7b-32768",
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2
+)
 
 vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
 
-retriever = vectorstore.as_retriever(
+retriever = MultiQueryRetriever.from_llm(
+    retriever = vectorstore.as_retriever(
     search_type="similarity",
     search_kwargs={"k": 3},
+    ),
+    llm=llm_model
+)
+compressor = LLMChainExtractor.from_llm(llm_model)
+
+# Combine MultiQueryRetriever with ContextualCompressionRetriever
+compression_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor,
+    base_retriever=retriever
 )
 
 # compressor = RankLLMRerank(top_n=5, model="zephyr")
@@ -36,9 +58,9 @@ SYSTEM_PROMPT = (
     
     "Dont recommend BMW cars on your own, ONLY RECOMMEND BMW MINI cars from the retrieved context"
 
-    "Dont make a general recommendation, ONLY recommend specific BMW MINI MODEL/MODELS"
+    "Dont make a general recommendation like the MINI Cooper, ONLY recommend SPECIFIC bmw MINI Model/Models"
     
-    "1. **Car Recommendations**: If a user seeks a car recommendation, analyze their needs and suggest the BMW MINI model that best fits their requirements. "
+    "1. **Car Recommendations**: If a user seeks a car recommendation, analyze their needs and suggest the BMW MINI model that best fits their requirements and explain its advantages in detail, provide clear reasoning for your recommendation"
     
     "2. **Non-BMW Car Alternatives**: If a user is interested in a car from another brand, offer a comparable BMW MINI model as an alternative and highlight its advantages. "
     
@@ -48,8 +70,10 @@ SYSTEM_PROMPT = (
     
     "5. **Unrelated Questions**: For questions not related to the retrieved context, respond as a standard chatbot. "
     
-    "6. **Response Quality**: Provide detailed and comprehensive answers to ensure users receive the information they need."
+    "6. **Response Quality**: Provide long, detailed and comprehensive answers to ensure users receive the information they need."
     
+    "7. **Syntax and Formatting: Answer in plain text, dont use symbols like **, there is no need to mention the existence of retrieved information explicitly"
+
     "\n\n"
     "{context}"
 )
@@ -66,16 +90,16 @@ from pprint import pprint
 
 def get_answer(query):
     # Use the retriever to get relevant documents
-    docs = retriever.invoke(query)
-    
+    docs = compression_retriever.invoke(query)
+
     # Format the context from retrieved documents
-    context = "\n\n".join([doc.page_content for doc in docs])
+    context = "\n\n".join([(doc.metadata['source'] + doc.page_content) for doc in docs])
     
     # Format the final prompt with context and query
     final_prompt = PROMPT.format(input=query, context=context)
     print(final_prompt)
     # Pass the final prompt to the LLM model
-    response = llm_model.generate_content(final_prompt)
+    response = model.generate_content(final_prompt)
     return response
 
 if __name__ == "__main__":
