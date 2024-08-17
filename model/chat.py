@@ -33,7 +33,7 @@ vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings
 
 retriever = vectorstore.as_retriever(
     search_type="similarity",
-    search_kwargs={"k": 3},
+    search_kwargs={"k": 10},
     )
 
 # compressor = LLMChainExtractor.from_llm(llm_model)
@@ -53,11 +53,9 @@ retriever = vectorstore.as_retriever(
 SYSTEM_PROMPT = (
     "You are a sales agent specializing in BMW MINI cars, tasked with assisting users by providing detailed information and recommendations. "
 
-    "Only recommend mini cars by BMW and only recommend based on the retrieved context"
-    
-    "Dont recommend BMW cars on your own, ONLY RECOMMEND BMW MINI cars from the retrieved context"
+    "ONLY RECOMMEND BMW MINI cars from the retrieved context"
 
-    "Dont make a general recommendation like the MINI Cooper, ONLY recommend SPECIFIC bmw MINI Model/Models"
+    "Dont make a general recommendation, ONLY recommend SPECIFIC bmw MINI Model/Models"
     
     "1. **Car Recommendations**: If a user seeks a car recommendation, analyze their needs and suggest the BMW MINI model that best fits their requirements and explain its advantages in detail, provide clear reasoning for your recommendation"
     
@@ -104,9 +102,25 @@ def get_answer(query, history):
 def gradio_interface(query):
     return get_answer(query)
 
-with gr.Blocks() as demo:
-    gr.ChatInterface(get_answer)
+css = """
+.center-aligned {
+    text-align: center;
+}
+"""
 
+with gr.Blocks(css=css) as demo:
+    gr.Markdown("# BMW MINI Sales ChatBot", elem_classes=["center-aligned"])
+    
+    gr.ChatInterface(
+        get_answer,
+        examples=[
+            "Recommend a comfortable and spacious car with lots of cargo space",
+            "Provide detailed specs for the BMW MINI Clubman"
+        ],
+        chatbot=gr.Chatbot(height=550),
+        textbox=gr.Textbox(placeholder="Type your message here...", container=False, scale=7),
+    )
+    gr.HTML("<div class='footer'>© 2024 BMW MINI. All rights reserved.</div>", elem_classes=["center-aligned"])
 
 if __name__ == "__main__":
     demo.launch()
