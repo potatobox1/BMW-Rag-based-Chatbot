@@ -4,51 +4,72 @@ import google.generativeai as genai
 import os
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 import argparse
+from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain.chains import create_history_aware_retriever
+from langchain_core.prompts import MessagesPlaceholder
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_groq import ChatGroq
 import gradio as gr
-
-
+import uuid
 
 CHROMA_DIR = "Chroma"
+MAX_RETRIES = 3
+RETRY_DELAY = 1
 
 load_dotenv()
 api_key = os.getenv('GEMINI_API_KEY')
+groq_api_key = os.getenv('GROQ_API_KEY')
+
+if not api_key or not groq_api_key:
+    raise ValueError("API keys not found in environment variables")
+
 genai.configure(api_key=api_key)
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001",google_api_key=api_key)
 
 llm_model = ChatGroq(
-    api_key=os.environ.get("GROQ_API_KEY"),
+    api_key=groq_api_key,
     model="llama-3.1-70b-versatile",
     temperature=0,
     max_tokens=None,
     timeout=None,
-    max_retries=2
+    max_retries=MAX_RETRIES
 )
 
-vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
+try:
+    vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
+except Exception as e:
+    print(f'Vector Database Error {e}')
+    raise
 
 retriever = vectorstore.as_retriever(
     search_type="similarity",
     search_kwargs={"k": 10},
     )
 
-# compressor = LLMChainExtractor.from_llm(llm_model)
+contextualize_q_system_prompt = (
+    "Given a chat history and the latest user question "
+    "which might reference context in the chat history, "
+    "formulate a standalone question which can be understood "
+    "without the chat history. Do NOT answer the question, "
+    "just reformulate it if needed and otherwise return it as is."
+)
 
-# Combine MultiQueryRetriever with ContextualCompressionRetriever
-# compression_retriever = ContextualCompressionRetriever(
-#     base_compressor=compressor,
-#     base_retriever=retriever
-# )
+contextualize_q_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", contextualize_q_system_prompt),
+        MessagesPlaceholder("chat_history"),
+        ("human", "{input}"),
+    ]
+)
 
-# compressor = RankLLMRerank(top_n=5, model="zephyr")
-# compression_retriever = ContextualCompressionRetriever(
-#     base_compressor=compressor, base_retriever=retriever
-# )
-
+history_aware_retriever = create_history_aware_retriever(
+    llm_model, retriever, contextualize_q_prompt
+)
 
 SYSTEM_PROMPT = (
     "You are a sales agent specializing in BMW MINI cars, tasked with assisting users by providing detailed information and recommendations. "
@@ -69,38 +90,52 @@ SYSTEM_PROMPT = (
     
     "6. **Response Quality**: Provide long, detailed and comprehensive answers to ensure users receive the information they need."
     
-    "7. **Syntax and Formatting: Answer in plain text, dont use symbols like **, do not mention the existence of retrieved information explicitly"
+    "7. **Syntax and Formatting: Do NOT mention the existence of retrieved information explicitly"
 
     "\n\n"
     "{context}"
 )
 
-
-PROMPT = ChatPromptTemplate.from_messages(
+qa_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", SYSTEM_PROMPT),
+        MessagesPlaceholder("chat_history"),
         ("human", "{input}"),
     ]
 )
+question_answer_chain = create_stuff_documents_chain(llm_model, qa_prompt)
 
-from pprint import pprint
+rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
-def get_answer(query, history):
-    # Use the retriever to get relevant documents
-    docs = retriever.invoke(query)
+store = {}
 
-    # Format the context from retrieved documents
-    context = "\n\n".join([(doc.metadata['source'] + doc.page_content) for doc in docs])
-    
-    # Format the final prompt with context and query
-    final_prompt = PROMPT.format(input=query, context=context)
-    print(final_prompt)
-    # Pass the final prompt to the LLM model
-    response = llm_model.invoke(final_prompt)
-    return response.content
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = ChatMessageHistory()
+    return store[session_id]
 
-def gradio_interface(query):
-    return get_answer(query)
+conversational_rag_chain = RunnableWithMessageHistory(
+    rag_chain,
+    get_session_history,
+    input_messages_key="input",
+    history_messages_key="chat_history",
+    output_messages_key="answer",
+)
+
+def get_answer(query: str, history: list) -> str:
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = conversational_rag_chain.invoke(
+                {"input": query},
+                config={"configurable": {"session_id": session_id}}
+            )
+            return response.get("answer", "I'm sorry, I couldn't find an answer to your question.")
+        except Exception as e:
+            print(f"Error in attempt {attempt + 1}: {e}")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY)
+            else:
+                return "I'm sorry, there was an error processing your request. Please try again later."
 
 css = """
 .center-aligned {
@@ -118,9 +153,13 @@ with gr.Blocks(css=css) as demo:
             "Provide detailed specs for the BMW MINI Clubman"
         ],
         chatbot=gr.Chatbot(height=550),
-        textbox=gr.Textbox(placeholder="Type your message here...", container=False, scale=7),
+        textbox=gr.Textbox(placeholder="Type your message here...", container=False, scale=7)
     )
     gr.HTML("<div class='footer'>© 2024 BMW MINI. All rights reserved.</div>", elem_classes=["center-aligned"])
 
 if __name__ == "__main__":
-    demo.launch()
+    session_id =  str(uuid.uuid4())
+    try:
+        demo.launch()
+    except Exception as e:
+        print(f"Failed to launch Gradio interface: {e}")
