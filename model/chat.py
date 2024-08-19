@@ -49,7 +49,7 @@ except Exception as e:
 
 retriever = vectorstore.as_retriever(
     search_type="similarity",
-    search_kwargs={"k": 10},
+    search_kwargs={"k": 5},
     )
 
 contextualize_q_system_prompt = (
@@ -78,6 +78,10 @@ SYSTEM_PROMPT = (
     "ONLY RECOMMEND BMW MINI cars from the retrieved context"
 
     "Dont make a general recommendation, ONLY recommend SPECIFIC bmw MINI Model/Models"
+
+    "Keep your answer limited to one or two paragraphs"
+
+    "Offer a high end model if the user budget is too high, offer financing options or suggest used car options if the budget is too low"
     
     "1. **Car Recommendations**: If a user seeks a car recommendation, analyze their needs and suggest the BMW MINI model that best fits their requirements and explain its advantages in detail, provide clear reasoning for your recommendation"
     
