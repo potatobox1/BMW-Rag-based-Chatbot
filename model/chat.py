@@ -118,7 +118,7 @@ store = {}
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
-    print(store[session_id])
+    #print(store[session_id])
     return store[session_id]
 
 conversational_rag_chain = RunnableWithMessageHistory(
@@ -141,39 +141,18 @@ simple_chain_with_history = RunnableWithMessageHistory(
     get_session_history,
     input_messages_key="input",
     history_messages_key="chat_history",
-    output_messages_key="text"
+    output_messages_key=None
+    #output_messages_key="text"
 )
 
-def needs_retrieval(query: str) -> bool:
-    # Use a simpler LLM or rule-based system to classify the query
-    classification_prompt = ChatPromptTemplate.from_messages([
-        ("system", "Determine if the following query requires retrieval of specific information about BMW MINI cars. Respond with 'Yes' or 'No'."),
-        ("human", "{query}")
-    ])
-    
-    classification_chain = classification_prompt | llm_model
-    
-    result = classification_chain.invoke({"query": query})
-    return result.content.lower().strip() == "yes"
-
 def get_answer(query: str, history: list) -> str:
-    needs_rag = needs_retrieval(query)
     for attempt in range(MAX_RETRIES):
         try:
-            if needs_rag:
-                response = conversational_rag_chain.invoke(
-                    {"input": query},
-                    config={"configurable": {"session_id": session_id}}
-                )
-                return response.get("answer", "I'm sorry, I couldn't find an answer to your question.")
-            else:
-                response = simple_chain_with_history.invoke(
-                    {"input": query},
-                    config={"configurable": {"session_id": session_id}}
-                )
-                #print(response)
-                return response['text']
-
+            response = conversational_rag_chain.invoke(
+                {"input": query},
+                config={"configurable": {"session_id": session_id}}
+            )
+            return response.get("answer", "I'm sorry, I couldn't find an answer to your question.")
         except Exception as e:
             print(f"Error in attempt {attempt + 1}: {e}")
             if attempt < MAX_RETRIES - 1:
@@ -204,6 +183,6 @@ with gr.Blocks(css=css) as demo:
 if __name__ == "__main__":
     session_id =  str(uuid.uuid4())
     try:
-        demo.launch()
+        demo.launch(quiet=True)
     except Exception as e:
         print(f"Failed to launch Gradio interface: {e}")
