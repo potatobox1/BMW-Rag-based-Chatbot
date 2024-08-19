@@ -2,6 +2,7 @@ from langchain.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 import google.generativeai as genai
 import os
+import time
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.chains import create_retrieval_chain
