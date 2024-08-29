@@ -1,4 +1,4 @@
-## RAG based conversational sales agent chatbot that can answer queries about BMW Mini cars and provide suitable recommendations based on personal info. ###
+## RAG based conversational sales agent chatbot with Gradio frontend that can answer queries about BMW Mini cars and provide suitable recommendations based on personal info. ###
 ### create a .env file and place ####
 #### "GEMINI_API_KEY = {key}" ####
 #### "GROQ_API_KEY = {key}" ####
