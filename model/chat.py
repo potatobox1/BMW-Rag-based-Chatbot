@@ -183,6 +183,6 @@ with gr.Blocks(css=css) as demo:
 if __name__ == "__main__":
     session_id =  str(uuid.uuid4())
     try:
-        demo.launch(quiet=True)
+        demo.launch()
     except Exception as e:
         print(f"Failed to launch Gradio interface: {e}")
